@@ -73,11 +73,23 @@ console.log('JSON.stringify: ', btoa(JSON.stringify(data)));
 
 const makeScreens = (element, uniqueId) => {
     const {play, lang, screens} = JSON.parse(atob(element.textContent));
-    element.innerHTML = `<button id='start-${uniqueId}'>Start</button>
-    <button id='stop-${uniqueId}'>Stop</button>`
+    element.innerHTML = `
+    <button id='start-${uniqueId}'>Start</button>
+    <button id='stop-${uniqueId}'>Stop</button>
+    <button>1</button>
+    <button>2</button>
+    <button>3</button>
+    <button>4</button>
+    <button>5</button>
+    `
     for (let i = 0; i < screens.length; i++) {
-        const { content } = screens[i]
+        const { content, notes } = screens[i]
         const lines = content.split('\n');
+        const div = document.createElement('div');
+        const p = document.createElement('p');
+        p.id = `comment-${i}`;
+        p.append(notes)
+        div.append(p);
         const code = document.createElement('code');
         code.id = `screen-${i}`;
         for (let j = 0; j < lines.length; j++) {
@@ -93,8 +105,12 @@ const makeScreens = (element, uniqueId) => {
             color: 'aliceblue',
         })
         code.style.display = 'block';
-        if (i) code.style.display = 'none';
-        element.appendChild(code);
+        if (i) {
+            code.style.display = 'none';
+            p.style.display = 'none';
+        }
+        div.append(code)
+        element.appendChild(div);
     }
 
     let isPlaying = false;
@@ -109,14 +125,15 @@ const makeScreens = (element, uniqueId) => {
         console.log('prev: ', prev);
         document.getElementById(`screen-${current}`).style.display = 'block'
         document.getElementById(`screen-${prev}`).style.display = 'none'
+        document.getElementById(`comment-${current}`).style.display = 'block'
+        document.getElementById(`comment-${prev}`).style.display = 'none'
         current++
         prev++
-
     }
 
     document.getElementById(`start-${uniqueId}`).addEventListener('click', () => {
         if (!isPlaying) {
-            currentInterval = setInterval(showCurrentScreen, 1000)
+            currentInterval = setInterval(showCurrentScreen, 3000)
             isPlaying = true;
         }
     })
