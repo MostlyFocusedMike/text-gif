@@ -1,87 +1,67 @@
+import data from './data';
+
+let isPlaying = false;
+let currentInterval;
+let current = 1;
+
 const elements = document.querySelectorAll('div[data-text-gif]');
 
-const data = {
-    play: true,
-    lang: 'js',
-    screens: [
-        {
-            content: `const fs = require('fs');
-const path = require('path');
-const repl = require('repl')`,
-            notes: 'First, lets import all our dependencies'
-        },
-        {
-            content: `const fs = require('fs');
-const path = require('path');
-const repl = require('repl')
-
-const modelDir = path.join(__dirname, 'src', 'models');`,
-            notes: 'We also need to tell our script exactly where the models are. path.join and __dirname create an OS agnostic path starting from the directory our script is in.'
-        },
-        {
-            content: `// ...
-const loadModels = (context) => {
-
-}`,
-            notes: `Next, lets work on the actual function to add our models to the REPL. Lets start by passing in a \`context\` parameter. This is the build context of the REPL. We can add properties to this object and access them globally in the session.`
-        },
-        {
-            content: `// ...
-const loadModels = (context) => {
-    fs.readdirSync(modelDir, 'utf8').forEach(name => {
-        const filePath = path.join(modelDir, name);
-        context[name.slice(0,-3)] = require(filePath);
-    });
-}`,
-            notes: `All we're doing is loading our model directory filenames. Thn we take each filename and make a proper path using our modelDir variable. Finally, we're dynamically setting the filename (minus the .js extension) onto our context, and setting the value to be the actual contents of the file via a new \`require\` statement.`
-        },
-        {
-            content: `// ...
-const loadModels = (context) => {
-    Object.keys(require.cache).forEach(key => {
-        delete require.cache[key];
-    });
-
-    fs.readdirSync(modelDir, 'utf8').forEach(name => {
-        const filePath = path.join(modelDir, name);
-        context[name.slice(0,-3)] = require(filePath);
-    });
-}`,
-            notes: `However, we also need to make sure that our \`require\` is only getting the freshest data. Ordinarily, there's a cache that only loads from the real file once. But here, we want to reload from the file each time. So, first we need to `
-        },
-        {
-            content: `const fs = require('fs');
-const path = require('path');
-const repl = require('repl');
-
-const modelDir = path.join(__dirname, 'src', 'models');
-
-const loadModels = (context) => {
-  Object.keys(require.cache).forEach(key => {
-    delete require.cache[key];
-  });
-  fs.readdirSync(modelDir, 'utf8').forEach(name => {
-    const filePath = path.join(modelDir, name);
-    context[name.slice(0,-3)] = require(filePath);
-  });
-}`,
-            notes: 'And here it is all put together!'
-        }
-    ]
-}
 console.log('JSON.stringify: ', btoa(JSON.stringify(data)));
 
+const makeButtons = (screens, uniqueId) => {
+    let buttons = '';
+    for (let i = 0; i < screens.length; i++) {
+        buttons += `<button id='button-${i}-${uniqueId}' data-idx=${i}>${i + 1}</button>`
+    }
+    return buttons;
+};
+
+
+
 const makeScreens = (element, uniqueId) => {
-    const {play, lang, screens} = JSON.parse(atob(element.textContent));
+    const { play, lang, screens } = JSON.parse(atob(element.textContent));
+
+
+    const hideAllScreens = () => {
+        for (let i = 0; i < screens.length; i++) {
+            document.getElementById(`screen-${i}`).style.display = 'none';
+            document.getElementById(`comment-${i}`).style.display = 'none';
+        }
+    }
+
+    const showCurrentScreen = () => {
+        hideAllScreens();
+        document.getElementById(`screen-${current}`).style.display = 'block';
+        document.getElementById(`comment-${current}`).style.display = 'block';
+    }
+
+    const showNextCurrentScreen = () => {
+        current = current % screens.length;
+        showCurrentScreen();
+        current++;
+    }
+
     element.innerHTML = `
-    <button id='start-${uniqueId}'>Start</button>
-    <button id='stop-${uniqueId}'>Stop</button>
-    <button>1</button>
-    <button>2</button>
-    <button>3</button>
-    <button>4</button>
-    <button>5</button>
-    `
+        <button id='start-${uniqueId}'>Start</button>
+        <button id='stop-${uniqueId}'>Stop</button>
+        ${makeButtons(screens, uniqueId)}
+        <button id='copy-current'>Copy current</button>
+        <button id='copy-main'>Copy Final</button>
+    `;
+
+    const attachListeners = (screens, uniqueId) => {
+        for (let i = 0; i < screens.length; i++) {
+            const button = document.getElementById(`button-${i}-${uniqueId}`);
+            button.addEventListener('click', (e) => {
+                console.log();
+                current = e.target.dataset.idx;
+                showCurrentScreen();
+            })
+        }
+    }
+
+    attachListeners(screens, uniqueId);
+
     for (let i = 0; i < screens.length; i++) {
         const { content, notes } = screens[i]
         const lines = content.split('\n');
@@ -113,27 +93,10 @@ const makeScreens = (element, uniqueId) => {
         element.appendChild(div);
     }
 
-    let isPlaying = false;
-    let currentInterval;
-    let current = 1;
-    let prev = 0
-
-    const showCurrentScreen = () => {
-        current = current % screens.length
-        prev = prev % screens.length
-        console.log('current: ', current);
-        console.log('prev: ', prev);
-        document.getElementById(`screen-${current}`).style.display = 'block'
-        document.getElementById(`screen-${prev}`).style.display = 'none'
-        document.getElementById(`comment-${current}`).style.display = 'block'
-        document.getElementById(`comment-${prev}`).style.display = 'none'
-        current++
-        prev++
-    }
 
     document.getElementById(`start-${uniqueId}`).addEventListener('click', () => {
         if (!isPlaying) {
-            currentInterval = setInterval(showCurrentScreen, 3000)
+            currentInterval = setInterval(showNextCurrentScreen, 1000)
             isPlaying = true;
         }
     })
@@ -143,6 +106,10 @@ const makeScreens = (element, uniqueId) => {
             clearInterval(currentInterval);
             isPlaying = false;
         }
+    })
+
+    document.getElementById(`copy-current`).addEventListener('click', () => {
+        console.log('hi: ', screens[current]);
     })
 }
 
