@@ -109,8 +109,12 @@ const makeScreens = (element, uniqueId) => {
     })
 
     document.getElementById(`copy-current`).addEventListener('click', () => {
-        console.log('hi: ', screens[current]);
-    })
+        navigator.clipboard.writeText(screens[current].content);
+    });
+
+    document.getElementById(`copy-main`).addEventListener('click', () => {
+        navigator.clipboard.writeText(screens[screens.length - 1].content);
+    });
 }
 
 for (let i = 0; i < elements.length; i++) {
