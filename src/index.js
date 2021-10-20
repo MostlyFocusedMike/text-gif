@@ -1,5 +1,14 @@
 import data from './data';
 
+const rawStr = '<p>'
+const encodeStr = (str) => str.replace(/[\u00A0-\u9999<>\&]/g, function(i) {
+    return '&#'+i.charCodeAt(0)+';';
+ });
+ console.log('encodedStr: ', encodeStr(rawStr));
+document.open();
+ document.write(encodeStr(rawStr))
+document.close();
+
 let isPlaying = false;
 let currentInterval;
 let current = 1;
@@ -91,8 +100,10 @@ const makeScreens = (element, uniqueId) => {
         }
         div.append(code)
         element.appendChild(div);
+
     }
 
+    console.log(document.getElementById('comment-0').textContent);
 
     document.getElementById(`start-${uniqueId}`).addEventListener('click', () => {
         if (!isPlaying) {
